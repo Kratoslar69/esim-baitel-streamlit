@@ -157,61 +157,39 @@ def show_qr_modal(row):
     iccid = row['iccid']
     qr_url = f"{QR_BASE_URL}{iccid}.png"
     
-    st.markdown(f"""
-    <div class="qr-modal">
-        <div class="qr-title">{iccid}</div>
-        <img src="{qr_url}" style="max-width: 400px; border: 2px solid #dee2e6; border-radius: 10px; padding: 20px; background: white;">
-        
-        <div class="qr-info">
-            <h3 style="text-align: center; margin-bottom: 20px; color: #2c3e50;">Información Detallada</h3>
-            
-            <div class="qr-info-row">
-                <span class="qr-info-label">ICCID:</span>
-                <span class="qr-info-value">{row.get('iccid', 'N/A')}</span>
-            </div>
-            
-            <div class="qr-info-row">
-                <span class="qr-info-label">MSISDN:</span>
-                <span class="qr-info-value">{row.get('msisdn', 'N/A')}</span>
-            </div>
-            
-            <div class="qr-info-row">
-                <span class="qr-info-label">IMSI:</span>
-                <span class="qr-info-value">{row.get('imsi', 'N/A')}</span>
-            </div>
-            
-            <div class="qr-info-row">
-                <span class="qr-info-label">Serie:</span>
-                <span class="qr-info-value">{row.get('serie', 'N/A')}</span>
-            </div>
-            
-            <div class="qr-info-row">
-                <span class="qr-info-label">PIN:</span>
-                <span class="qr-info-value">{row.get('pin', 'N/A')}</span>
-            </div>
-            
-            <div class="qr-info-row">
-                <span class="qr-info-label">PUK:</span>
-                <span class="qr-info-value">{row.get('puk', 'N/A')}</span>
-            </div>
-            
-            <div class="qr-info-row">
-                <span class="qr-info-label">IP:</span>
-                <span class="qr-info-value">{row.get('ip', 'N/A')}</span>
-            </div>
-            
-            <div class="qr-info-row">
-                <span class="qr-info-label">Producto:</span>
-                <span class="qr-info-value">{row.get('producto', 'N/A')}</span>
-            </div>
-            
-            <div class="qr-info-row" style="border-bottom: none;">
-                <span class="qr-info-label">Asignado a:</span>
-                <span class="qr-info-value">{row.get('asignado_a', 'N/A')}</span>
-            </div>
-        </div>
-    </div>
-    """, unsafe_allow_html=True)
+    # Título
+    st.markdown(f"<h2 style='text-align: center; color: #2c3e50;'>{iccid}</h2>", unsafe_allow_html=True)
+    
+    # Imagen QR centrada
+    col1, col2, col3 = st.columns([1, 2, 1])
+    with col2:
+        try:
+            response = requests.get(qr_url)
+            if response.status_code == 200:
+                st.image(qr_url, use_container_width=True)
+            else:
+                st.warning(f"⚠️ No se encontró la imagen QR para {iccid}")
+        except:
+            st.error(f"❌ Error al cargar QR desde {qr_url}")
+    
+    # Información detallada
+    st.markdown("<h3 style='text-align: center; margin-top: 20px; color: #2c3e50;'>Información Detallada</h3>", unsafe_allow_html=True)
+    
+    col_left, col_right = st.columns(2)
+    
+    with col_left:
+        st.write(f"**ICCID:** {row.get('iccid', 'N/A')}")
+        st.write(f"**MSISDN:** {row.get('msisdn', 'N/A')}")
+        st.write(f"**IMSI:** {row.get('imsi', 'N/A')}")
+        st.write(f"**Serie:** {row.get('serie', 'N/A')}")
+    
+    with col_right:
+        st.write(f"**PIN:** {row.get('pin', 'N/A')}")
+        st.write(f"**PUK:** {row.get('puk', 'N/A')}")
+        st.write(f"**IP:** {row.get('ip', 'N/A')}")
+        st.write(f"**Producto:** {row.get('producto', 'N/A')}")
+    
+    st.write(f"**Asignado a:** {row.get('asignado_a', 'N/A')}")
 
 # Header
 st.markdown("""
