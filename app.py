@@ -302,32 +302,88 @@ st.divider()
 tab1, tab2, tab3, tab4 = st.tabs(["📋 Tabla de Datos", "📊 Estadísticas", "➕ Agregar Nuevo", "📖 Instrucciones"])
 
 with tab1:
-    st.subheader("📋 Inventario de eSIM")
+    # Toggle para vista
+    col_title, col_toggle = st.columns([3, 1])
+    with col_title:
+        st.subheader("📋 Inventario de eSIM")
+    with col_toggle:
+        view_mode = st.selectbox("👁️ Vista", ["Lista", "Tarjetas"], label_visibility="collapsed")
     
     if not filtered_df.empty:
-        # Mostrar tabla con botones de QR
-        for idx, row in filtered_df.iterrows():
-            with st.expander(f"📱 {row['iccid']} - {row['estado']} - {row.get('asignado_a', 'Sin asignar')}"):
-                col_info, col_qr = st.columns([2, 1])
-                
-                with col_info:
-                    st.write(f"**MSISDN:** {row.get('msisdn', 'N/A')}")
-                    st.write(f"**IMSI:** {row.get('imsi', 'N/A')}")
-                    st.write(f"**Producto:** {row.get('producto', 'N/A')}")
-                    st.write(f"**IP:** {row.get('ip', 'N/A')}")
-                    st.write(f"**Estado:** {row.get('estado', 'N/A')}")
-                    st.write(f"**Distribuidor:** {row.get('distribuidor', 'N/A')}")
-                
-                with col_qr:
-                    if st.button(f"📱 Ver QR", key=f"qr_{row['id']}", use_container_width=True):
-                        st.session_state[f'show_qr_{row["id"]}'] = True
-                
-                # Mostrar QR si se clickeó el botón
-                if st.session_state.get(f'show_qr_{row["id"]}', False):
-                    show_qr_modal(row)
-                    if st.button("❌ Cerrar QR", key=f"close_qr_{row['id']}"):
-                        st.session_state[f'show_qr_{row["id"]}'] = False
-                        st.rerun()
+        if view_mode == "Lista":
+            # Vista de lista (original)
+            for idx, row in filtered_df.iterrows():
+                with st.expander(f"📱 {row['iccid']} - {row['estado']} - {row.get('asignado_a', 'Sin asignar')}"):
+                    col_info, col_qr = st.columns([2, 1])
+                    
+                    with col_info:
+                        st.write(f"**MSISDN:** {row.get('msisdn', 'N/A')}")
+                        st.write(f"**IMSI:** {row.get('imsi', 'N/A')}")
+                        st.write(f"**Producto:** {row.get('producto', 'N/A')}")
+                        st.write(f"**IP:** {row.get('ip', 'N/A')}")
+                        st.write(f"**Estado:** {row.get('estado', 'N/A')}")
+                        st.write(f"**Distribuidor:** {row.get('distribuidor', 'N/A')}")
+                    
+                    with col_qr:
+                        if st.button(f"📱 Ver QR", key=f"qr_{row['id']}", use_container_width=True):
+                            st.session_state[f'show_qr_{row["id"]}'] = True
+                    
+                    # Mostrar QR si se clickeó el botón
+                    if st.session_state.get(f'show_qr_{row["id"]}', False):
+                        show_qr_modal(row)
+                        if st.button("❌ Cerrar QR", key=f"close_qr_{row['id']}"):
+                            st.session_state[f'show_qr_{row["id"]}'] = False
+                            st.rerun()
+        
+        else:
+            # Vista de tarjetas (nueva)
+            cols_per_row = 3  # 3 tarjetas por fila en desktop
+            rows = [filtered_df.iloc[i:i+cols_per_row] for i in range(0, len(filtered_df), cols_per_row)]
+            
+            for row_data in rows:
+                cols = st.columns(cols_per_row)
+                for idx, (_, row) in enumerate(row_data.iterrows()):
+                    with cols[idx]:
+                        # Tarjeta con estilo
+                        estado_color = "#27ae60" if row['estado'] == "Disponible" else "#e74c3c"
+                        qr_url = f"{QR_BASE_URL}{row['iccid']}.png"
+                        
+                        st.markdown(f"""
+                        <div style="
+                            border: 2px solid {estado_color};
+                            border-radius: 15px;
+                            padding: 15px;
+                            background: white;
+                            box-shadow: 0 4px 6px rgba(0,0,0,0.1);
+                            margin-bottom: 20px;
+                            height: 100%;
+                        ">
+                            <div style="text-align: center; margin-bottom: 10px;">
+                                <img src="{qr_url}" style="width: 150px; height: 150px; border-radius: 10px;" onerror="this.src='https://via.placeholder.com/150?text=QR+No+Disponible'">
+                            </div>
+                            <div style="background: {estado_color}; color: white; padding: 5px; border-radius: 5px; text-align: center; font-weight: bold; margin-bottom: 10px;">
+                                {row['estado']}
+                            </div>
+                            <div style="font-size: 12px; color: #2c3e50;">
+                                <strong>ICCID:</strong><br>{row['iccid'][:20]}...<br><br>
+                                <strong>MSISDN:</strong> {row.get('msisdn', 'N/A')}<br>
+                                <strong>Producto:</strong> {row.get('producto', 'N/A')}<br>
+                                <strong>IP:</strong> {row.get('ip', 'N/A')}<br>
+                                <strong>Asignado:</strong> {row.get('asignado_a', 'N/A')[:15]}...
+                            </div>
+                        </div>
+                        """, unsafe_allow_html=True)
+                        
+                        # Botón para ver detalles
+                        if st.button("🔍 Ver Detalles", key=f"card_{row['id']}", use_container_width=True):
+                            st.session_state[f'show_qr_{row["id"]}'] = True
+                        
+                        # Mostrar modal si se clickeó
+                        if st.session_state.get(f'show_qr_{row["id"]}', False):
+                            show_qr_modal(row)
+                            if st.button("❌ Cerrar", key=f"close_card_{row['id']}", use_container_width=True):
+                                st.session_state[f'show_qr_{row["id"]}'] = False
+                                st.rerun()
         
         st.info(f"💡 Mostrando {len(filtered_df)} de {len(df)} registros totales")
     else:
