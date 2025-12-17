@@ -40,17 +40,19 @@ BAITEL_WHITE = "#FFFFFF"
 
 # Definir colores según modo
 if st.session_state.dark_mode:
-    BG_COLOR = "#1A1A1A"
-    BG_SECONDARY = "#2C2C2C"
-    TEXT_COLOR = "#FFFFFF"
-    CARD_BG = "#2C2C2C"
-    HEADER_GRADIENT = f"linear-gradient(135deg, {BAITEL_BLACK} 0%, {BAITEL_BLUE} 100%)"
+    BG_COLOR = "#0F1419"  # Azul oscuro profesional
+    BG_SECONDARY = "#1C2938"  # Azul gris oscuro
+    TEXT_COLOR = "#E8EAED"  # Gris claro suave
+    CARD_BG = "#1C2938"  # Azul gris para tarjetas
+    HEADER_GRADIENT = f"linear-gradient(135deg, #0A2540 0%, {BAITEL_BLUE} 100%)"  # Azul marino a azul BAITEL
+    ACCENT_COLOR = "#FFC107"  # Amarillo dorado más profesional
 else:
-    BG_COLOR = "#FFFFFF"
-    BG_SECONDARY = "#F5F5F5"
-    TEXT_COLOR = "#000000"
-    CARD_BG = "#FFFFFF"
-    HEADER_GRADIENT = f"linear-gradient(135deg, {BAITEL_BLUE} 0%, {BAITEL_YELLOW} 100%)"
+    BG_COLOR = "#F8F9FA"  # Gris muy claro
+    BG_SECONDARY = "#E9ECEF"  # Gris claro
+    TEXT_COLOR = "#212529"  # Gris oscuro (no negro puro)
+    CARD_BG = "#FFFFFF"  # Blanco para tarjetas
+    HEADER_GRADIENT = f"linear-gradient(135deg, {BAITEL_BLUE} 0%, #0A2540 100%)"  # Azul BAITEL a azul marino
+    ACCENT_COLOR = BAITEL_YELLOW  # Amarillo BAITEL original
 
 # CSS personalizado con colores BAITEL
 st.markdown(f"""
@@ -101,13 +103,16 @@ st.markdown(f"""
         color: {TEXT_COLOR} !important;
     }}
     section[data-testid="stSidebar"] .stButton button {{
-        background-color: {BAITEL_YELLOW};
+        background-color: {ACCENT_COLOR};
         color: {BAITEL_BLACK};
         border: none;
+        font-weight: 600;
     }}
     section[data-testid="stSidebar"] .stButton button:hover {{
         background-color: {BAITEL_BLUE};
         color: white;
+        transform: translateY(-1px);
+        box-shadow: 0 4px 8px rgba(0,0,0,0.2);
     }}
     /* Estilos completos para selectbox/dropdown en sidebar */
     section[data-testid="stSidebar"] div[data-baseweb="select"] {{
@@ -136,7 +141,7 @@ st.markdown(f"""
         color: {TEXT_COLOR} !important;
     }}
     li[role="option"]:hover {{
-        background-color: {BAITEL_YELLOW} !important;
+        background-color: {ACCENT_COLOR} !important;
         color: {BAITEL_BLACK} !important;
     }}
     li[role="option"] div {{
@@ -168,8 +173,9 @@ st.markdown(f"""
         color: {TEXT_COLOR} !important;
     }}
     section[data-testid="stSidebar"] div[data-testid="stFileUploader"] button {{
-        background-color: {BAITEL_YELLOW} !important;
+        background-color: {ACCENT_COLOR} !important;
         color: {BAITEL_BLACK} !important;
+        font-weight: 600 !important;
     }}
     /* Ocultar toolbar superior */
     header[data-testid="stHeader"] {{
