@@ -109,33 +109,67 @@ st.markdown(f"""
         background-color: {BAITEL_BLUE};
         color: white;
     }}
-    /* Estilos para selectbox/dropdown en sidebar */
-    section[data-testid="stSidebar"] div[data-baseweb="select"] > div {{
-        background-color: {CARD_BG};
-        color: {TEXT_COLOR};
-    }}
-    section[data-testid="stSidebar"] div[data-baseweb="select"] input {{
-        color: {TEXT_COLOR};
-    }}
-    section[data-testid="stSidebar"] div[data-baseweb="popover"] {{
-        background-color: {CARD_BG};
-    }}
-    section[data-testid="stSidebar"] ul[role="listbox"] {{
+    /* Estilos completos para selectbox/dropdown en sidebar */
+    section[data-testid="stSidebar"] div[data-baseweb="select"] {{
         background-color: {CARD_BG} !important;
     }}
-    section[data-testid="stSidebar"] li[role="option"] {{
+    section[data-testid="stSidebar"] div[data-baseweb="select"] > div {{
         background-color: {CARD_BG} !important;
         color: {TEXT_COLOR} !important;
     }}
-    section[data-testid="stSidebar"] li[role="option"]:hover {{
+    section[data-testid="stSidebar"] div[data-baseweb="select"] input {{
+        color: {TEXT_COLOR} !important;
+    }}
+    section[data-testid="stSidebar"] div[data-baseweb="select"] svg {{
+        fill: {TEXT_COLOR} !important;
+    }}
+    /* Dropdown menu desplegado */
+    div[data-baseweb="popover"] {{
+        background-color: {CARD_BG} !important;
+    }}
+    ul[role="listbox"] {{
+        background-color: {CARD_BG} !important;
+        border: 1px solid {BG_SECONDARY} !important;
+    }}
+    li[role="option"] {{
+        background-color: {CARD_BG} !important;
+        color: {TEXT_COLOR} !important;
+    }}
+    li[role="option"]:hover {{
         background-color: {BAITEL_YELLOW} !important;
+        color: {BAITEL_BLACK} !important;
+    }}
+    li[role="option"] div {{
+        color: {TEXT_COLOR} !important;
+    }}
+    li[role="option"]:hover div {{
         color: {BAITEL_BLACK} !important;
     }}
     /* Estilos para text input en sidebar */
     section[data-testid="stSidebar"] input[type="text"] {{
-        background-color: {CARD_BG};
-        color: {TEXT_COLOR};
-        border: 1px solid {BG_SECONDARY};
+        background-color: {CARD_BG} !important;
+        color: {TEXT_COLOR} !important;
+        border: 1px solid {BG_SECONDARY} !important;
+    }}
+    section[data-testid="stSidebar"] textarea {{
+        background-color: {CARD_BG} !important;
+        color: {TEXT_COLOR} !important;
+        border: 1px solid {BG_SECONDARY} !important;
+    }}
+    /* File uploader */
+    section[data-testid="stSidebar"] div[data-testid="stFileUploader"] {{
+        background-color: {CARD_BG} !important;
+    }}
+    section[data-testid="stSidebar"] div[data-testid="stFileUploader"] section {{
+        background-color: {CARD_BG} !important;
+        border: 1px dashed {TEXT_COLOR} !important;
+    }}
+    section[data-testid="stSidebar"] div[data-testid="stFileUploader"] small {{
+        color: {TEXT_COLOR} !important;
+    }}
+    section[data-testid="stSidebar"] div[data-testid="stFileUploader"] button {{
+        background-color: {BAITEL_YELLOW} !important;
+        color: {BAITEL_BLACK} !important;
     }}
     /* Ocultar toolbar superior */
     header[data-testid="stHeader"] {{
