@@ -109,6 +109,34 @@ st.markdown(f"""
         background-color: {BAITEL_BLUE};
         color: white;
     }}
+    /* Estilos para selectbox/dropdown en sidebar */
+    section[data-testid="stSidebar"] div[data-baseweb="select"] > div {{
+        background-color: {CARD_BG};
+        color: {TEXT_COLOR};
+    }}
+    section[data-testid="stSidebar"] div[data-baseweb="select"] input {{
+        color: {TEXT_COLOR};
+    }}
+    section[data-testid="stSidebar"] div[data-baseweb="popover"] {{
+        background-color: {CARD_BG};
+    }}
+    section[data-testid="stSidebar"] ul[role="listbox"] {{
+        background-color: {CARD_BG} !important;
+    }}
+    section[data-testid="stSidebar"] li[role="option"] {{
+        background-color: {CARD_BG} !important;
+        color: {TEXT_COLOR} !important;
+    }}
+    section[data-testid="stSidebar"] li[role="option"]:hover {{
+        background-color: {BAITEL_YELLOW} !important;
+        color: {BAITEL_BLACK} !important;
+    }}
+    /* Estilos para text input en sidebar */
+    section[data-testid="stSidebar"] input[type="text"] {{
+        background-color: {CARD_BG};
+        color: {TEXT_COLOR};
+        border: 1px solid {BG_SECONDARY};
+    }}
     /* Ocultar toolbar superior */
     header[data-testid="stHeader"] {{
         background-color: {BG_COLOR};
