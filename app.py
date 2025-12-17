@@ -78,6 +78,37 @@ st.markdown(f"""
     h1, h2, h3, h4, h5, h6, p, span, div {{
         color: {TEXT_COLOR};
     }}
+    /* Sidebar styles */
+    section[data-testid="stSidebar"] {{
+        background-color: {BG_SECONDARY};
+    }}
+    section[data-testid="stSidebar"] .stMarkdown {{
+        color: {TEXT_COLOR};
+    }}
+    section[data-testid="stSidebar"] label {{
+        color: {TEXT_COLOR} !important;
+    }}
+    section[data-testid="stSidebar"] .stSelectbox label,
+    section[data-testid="stSidebar"] .stTextInput label,
+    section[data-testid="stSidebar"] .stMultiSelect label,
+    section[data-testid="stSidebar"] .stCheckbox label {{
+        color: {TEXT_COLOR} !important;
+    }}
+    section[data-testid="stSidebar"] h1,
+    section[data-testid="stSidebar"] h2,
+    section[data-testid="stSidebar"] h3,
+    section[data-testid="stSidebar"] p {{
+        color: {TEXT_COLOR} !important;
+    }}
+    section[data-testid="stSidebar"] .stButton button {{
+        background-color: {BAITEL_YELLOW};
+        color: {BAITEL_BLACK};
+        border: none;
+    }}
+    section[data-testid="stSidebar"] .stButton button:hover {{
+        background-color: {BAITEL_BLUE};
+        color: white;
+    }}
     .qr-modal {{
         background: {CARD_BG};
         padding: 30px;
