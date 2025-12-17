@@ -78,40 +78,40 @@ st.markdown(f"""
     h1, h2, h3, h4, h5, h6, p, span, div {{
         color: {TEXT_COLOR};
     }}
-    .qr-modal {
-        background: white;
+    .qr-modal {{
+        background: {CARD_BG};
         padding: 30px;
         border-radius: 15px;
         text-align: center;
         max-width: 600px;
         margin: 0 auto;
-    }
-    .qr-title {
+        border: 1px solid {BG_SECONDARY};
+    }}
+    .qr-title {{
         font-size: 32px;
         font-weight: bold;
         margin-bottom: 20px;
-        color: #2c3e50;
-    }
-    .qr-info {
-        background: #f8f9fa;
+        color: {TEXT_COLOR};
+    }}
+    .qr-info {{
+        background: {BG_SECONDARY};
         padding: 20px;
         border-radius: 10px;
-        margin-top: 20px;
-        text-align: left;
-    }
-    .qr-info-row {
+        margin: 20px 0;
+    }}
+    .qr-info-row {{
         display: flex;
         justify-content: space-between;
         padding: 10px 0;
-        border-bottom: 1px solid #dee2e6;
-    }
-    .qr-info-label {
+        border-bottom: 1px solid {BG_SECONDARY};
+    }}
+    .qr-info-label {{
         font-weight: bold;
-        color: #495057;
-    }
-    .qr-info-value {
-        color: #212529;
-    }
+        color: {TEXT_COLOR};
+    }}
+    .qr-info-value {{
+        color: {TEXT_COLOR};
+    }}
 </style>
 """, unsafe_allow_html=True)
 
@@ -218,7 +218,7 @@ def show_qr_modal(row):
     """, unsafe_allow_html=True)
     
     # Título
-    st.markdown(f"<h2 style='text-align: center; color: #2c3e50; background: white; padding: 15px; border-radius: 10px; margin-bottom: 20px;'>{iccid}</h2>", unsafe_allow_html=True)
+    st.markdown(f"<h2 style='text-align: center; color: {TEXT_COLOR}; background: {CARD_BG}; padding: 15px; border-radius: 10px; margin-bottom: 20px;'>{iccid}</h2>", unsafe_allow_html=True)
     
     # Imagen QR centrada
     col1, col2, col3 = st.columns([1, 2, 1])
@@ -233,7 +233,7 @@ def show_qr_modal(row):
             st.error(f"❌ Error al cargar QR desde {qr_url}")
     
     # Información detallada
-    st.markdown("<h3 style='text-align: center; margin-top: 20px; color: #2c3e50;'>Información Detallada</h3>", unsafe_allow_html=True)
+    st.markdown(f"<h3 style='text-align: center; margin-top: 20px; color: {TEXT_COLOR};'>Información Detallada</h3>", unsafe_allow_html=True)
     
     col_left, col_right = st.columns(2)
     
@@ -252,7 +252,7 @@ def show_qr_modal(row):
     st.divider()
     
     # Formulario de asignación
-    st.markdown("<h3 style='text-align: center; color: #2c3e50;'>✏️ Asignar eSIM</h3>", unsafe_allow_html=True)
+    st.markdown(f"<h3 style='text-align: center; color: {TEXT_COLOR};'>✏️ Asignar eSIM</h3>", unsafe_allow_html=True)
     
     current_asignado = row.get('asignado_a', '')
     current_estado = row.get('estado', 'Disponible')
@@ -542,7 +542,7 @@ with tab1:
                             border: 2px solid {estado_color};
                             border-radius: 15px;
                             padding: 15px;
-                            background: white;
+                            background: {CARD_BG};
                             box-shadow: 0 4px 6px rgba(0,0,0,0.1);
                             margin-bottom: 20px;
                             height: 100%;
@@ -553,7 +553,7 @@ with tab1:
                             <div style="background: {estado_color}; color: white; padding: 5px; border-radius: 5px; text-align: center; font-weight: bold; margin-bottom: 10px;">
                                 {row['estado']}
                             </div>
-                            <div style="font-size: 12px; color: #2c3e50;">
+                            <div style="font-size: 12px; color: {TEXT_COLOR};">
                                 <strong>ICCID:</strong><br>{row['iccid'][:20]}...<br><br>
                                 <strong>MSISDN:</strong> {row.get('msisdn', 'N/A')}<br>
                                 <strong>Producto:</strong> {row.get('producto', 'N/A')}<br>
@@ -711,8 +711,8 @@ with tab4:
 
 # Footer
 st.divider()
-st.markdown("""
-<div style='text-align: center; color: white; padding: 20px;'>
+st.markdown(f"""
+<div style='text-align: center; color: {TEXT_COLOR}; padding: 20px;'>
     <p>Sistema eSIM BAITEL - Versión Streamlit | Conectado a Supabase ✅</p>
 </div>
 """, unsafe_allow_html=True)
