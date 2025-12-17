@@ -1,13 +1,14 @@
 import streamlit as st
 import pandas as pd
-from supabase import create_client
+from supabase import create_client, Client
 import os
 from dotenv import load_dotenv
 import plotly.express as px
-import plotly.graph_objects as go
 from datetime import datetime
 import io
 import requests
+import time
+from template_generator import generate_template, validate_import_data
 
 # Cargar variables de entorno
 load_dotenv()
@@ -152,13 +153,31 @@ def import_from_file(file):
     except Exception as e:
         return False, f"❌ Error importando: {str(e)}"
 
-# Función para mostrar QR
+# Función para actualizar eSIM en Supabase
+def update_esim(esim_id, asignado_a, estado):
+    try:
+        response = supabase.table('esim_data').update({
+            'asignado_a': asignado_a,
+            'estado': estado,
+            'fecha_ultimo_cambio': datetime.now().isoformat()
+        }).eq('id', esim_id).execute()
+        return True, "✅ eSIM actualizada exitosamente"
+    except Exception as e:
+        return False, f"❌ Error al actualizar: {str(e)}"
+
+# Función para mostrar QR con modal interactivo
 def show_qr_modal(row):
     iccid = row['iccid']
     qr_url = f"{QR_BASE_URL}{iccid}.png"
     
+    # Contenedor con fondo semi-transparente
+    st.markdown("""
+    <div style="background: rgba(0,0,0,0.5); padding: 20px; border-radius: 15px;">
+    </div>
+    """, unsafe_allow_html=True)
+    
     # Título
-    st.markdown(f"<h2 style='text-align: center; color: #2c3e50;'>{iccid}</h2>", unsafe_allow_html=True)
+    st.markdown(f"<h2 style='text-align: center; color: #2c3e50; background: white; padding: 15px; border-radius: 10px; margin-bottom: 20px;'>{iccid}</h2>", unsafe_allow_html=True)
     
     # Imagen QR centrada
     col1, col2, col3 = st.columns([1, 2, 1])
@@ -189,7 +208,53 @@ def show_qr_modal(row):
         st.write(f"**IP:** {row.get('ip', 'N/A')}")
         st.write(f"**Producto:** {row.get('producto', 'N/A')}")
     
-    st.write(f"**Asignado a:** {row.get('asignado_a', 'N/A')}")
+    st.divider()
+    
+    # Formulario de asignación
+    st.markdown("<h3 style='text-align: center; color: #2c3e50;'>✏️ Asignar eSIM</h3>", unsafe_allow_html=True)
+    
+    current_asignado = row.get('asignado_a', '')
+    current_estado = row.get('estado', 'Disponible')
+    
+    with st.form(key=f"form_assign_{row['id']}"):
+        col_form1, col_form2 = st.columns(2)
+        
+        with col_form1:
+            nuevo_asignado = st.text_input(
+                "Asignar a:",
+                value=current_asignado if current_asignado else "",
+                placeholder="Ej: BT287, TIENDA, Cliente...",
+                key=f"asignado_{row['id']}"
+            )
+        
+        with col_form2:
+            nuevo_estado = st.selectbox(
+                "Estado:",
+                ["Disponible", "Usado"],
+                index=1 if current_estado == "Usado" else 0,
+                key=f"estado_{row['id']}"
+            )
+        
+        col_btn1, col_btn2 = st.columns(2)
+        
+        with col_btn1:
+            submit = st.form_submit_button("💾 Guardar Cambios", use_container_width=True)
+        
+        with col_btn2:
+            if st.form_submit_button("🗑️ Limpiar Asignación", use_container_width=True):
+                nuevo_asignado = ""
+                nuevo_estado = "Disponible"
+                submit = True
+        
+        if submit:
+            success, message = update_esim(row['id'], nuevo_asignado, nuevo_estado)
+            if success:
+                st.success(message)
+                st.cache_data.clear()
+                time.sleep(1)
+                st.rerun()
+            else:
+                st.error(message)
 
 # Header
 st.markdown("""
@@ -237,7 +302,20 @@ with st.sidebar:
     
     st.subheader("📁 Importar/Exportar")
     
-    if st.button("📊 Exportar a Excel", use_container_width=True):
+    # Descargar plantilla
+    if st.button("📝 Descargar Plantilla Excel", use_container_width=True):
+        template = generate_template()
+        st.download_button(
+            label="⬇️ Descargar Plantilla",
+            data=template,
+            file_name=f"plantilla_esim_{datetime.now().strftime('%Y%m%d')}.xlsx",
+            mime="application/vnd.openxmlformats-officedocument.spreadsheetml.sheet",
+            use_container_width=True,
+            help="Descarga esta plantilla, llénala con tus datos y súbela de nuevo"
+        )
+    
+    # Exportar datos actuales
+    if st.button("📊 Exportar Inventario Actual", use_container_width=True):
         if not df.empty:
             output = io.BytesIO()
             with pd.ExcelWriter(output, engine='openpyxl') as writer:
@@ -247,20 +325,73 @@ with st.sidebar:
             st.download_button(
                 label="⬇️ Descargar Excel",
                 data=output,
-                file_name=f"esim_data_{datetime.now().strftime('%Y%m%d_%H%M%S')}.xlsx",
+                file_name=f"esim_inventario_{datetime.now().strftime('%Y%m%d_%H%M%S')}.xlsx",
                 mime="application/vnd.openxmlformats-officedocument.spreadsheetml.sheet",
                 use_container_width=True
             )
     
-    uploaded_file = st.file_uploader("📤 Importar CSV/Excel", type=['csv', 'xlsx'])
+    st.divider()
+    
+    # Importar datos masivos
+    st.markdown("**🚀 Carga Masiva**")
+    uploaded_file = st.file_uploader(
+        "Subir archivo Excel/CSV",
+        type=['csv', 'xlsx'],
+        help="Sube un archivo con el formato de la plantilla para agregar múltiples eSIMs"
+    )
+    
     if uploaded_file:
-        success, message = import_from_file(uploaded_file)
-        if success:
-            st.success(message)
-            st.cache_data.clear()
-            st.rerun()
-        else:
-            st.error(message)
+        try:
+            # Leer archivo
+            if uploaded_file.name.endswith('.csv'):
+                import_df = pd.read_csv(uploaded_file)
+            else:
+                import_df = pd.read_excel(uploaded_file)
+            
+            # Validar datos
+            is_valid, validation_msg = validate_import_data(import_df)
+            
+            if not is_valid:
+                st.error(validation_msg)
+            else:
+                st.success(validation_msg)
+                st.info(f"📄 {len(import_df)} registros listos para importar")
+                
+                # Mostrar preview
+                with st.expander("👁️ Vista previa de datos"):
+                    st.dataframe(import_df.head(10))
+                
+                # Botón para confirmar importación
+                if st.button("✅ Confirmar e Importar", use_container_width=True, type="primary"):
+                    with st.spinner("Importando datos..."):
+                        try:
+                            # Dividir en lotes de 1000 (límite de Supabase)
+                            batch_size = 1000
+                            total_imported = 0
+                            
+                            for i in range(0, len(import_df), batch_size):
+                                batch = import_df.iloc[i:i+batch_size]
+                                records = batch.to_dict('records')
+                                
+                                # Agregar timestamps si no existen
+                                for record in records:
+                                    if 'fecha_creacion' not in record or pd.isna(record['fecha_creacion']):
+                                        record['fecha_creacion'] = datetime.now().isoformat()
+                                    if 'fecha_ultimo_cambio' not in record or pd.isna(record['fecha_ultimo_cambio']):
+                                        record['fecha_ultimo_cambio'] = datetime.now().isoformat()
+                                
+                                response = supabase.table('esim_data').insert(records).execute()
+                                total_imported += len(records)
+                            
+                            st.success(f"✅ {total_imported} registros importados exitosamente")
+                            st.cache_data.clear()
+                            time.sleep(2)
+                            st.rerun()
+                        except Exception as e:
+                            st.error(f"❌ Error al importar: {str(e)}")
+        
+        except Exception as e:
+            st.error(f"❌ Error al leer archivo: {str(e)}")
 
 # Aplicar filtros
 filtered_df = df.copy()
