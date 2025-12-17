@@ -109,6 +109,20 @@ st.markdown(f"""
         background-color: {BAITEL_BLUE};
         color: white;
     }}
+    /* Ocultar toolbar superior */
+    header[data-testid="stHeader"] {{
+        background-color: {BG_COLOR};
+        display: none;
+    }}
+    .stDeployButton {{
+        display: none;
+    }}
+    #MainMenu {{
+        visibility: hidden;
+    }}
+    footer {{
+        visibility: hidden;
+    }}
     .qr-modal {{
         background: {CARD_BG};
         padding: 30px;
