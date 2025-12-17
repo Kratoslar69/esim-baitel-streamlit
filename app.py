@@ -24,19 +24,60 @@ st.set_page_config(
 # URL base del repositorio de QR
 QR_BASE_URL = "https://raw.githubusercontent.com/Kratoslar69/esim-qr-baitel/main/"
 
-# CSS personalizado
-st.markdown("""
+# Inicializar modo oscuro en session_state
+if 'dark_mode' not in st.session_state:
+    st.session_state.dark_mode = False
+
+# Inicializar vista por defecto
+if 'view_mode' not in st.session_state:
+    st.session_state.view_mode = "Tarjetas"
+
+# Colores BAITEL
+BAITEL_YELLOW = "#FFD100"
+BAITEL_BLUE = "#0089D0"
+BAITEL_BLACK = "#000000"
+BAITEL_WHITE = "#FFFFFF"
+
+# Definir colores según modo
+if st.session_state.dark_mode:
+    BG_COLOR = "#1A1A1A"
+    BG_SECONDARY = "#2C2C2C"
+    TEXT_COLOR = "#FFFFFF"
+    CARD_BG = "#2C2C2C"
+    HEADER_GRADIENT = f"linear-gradient(135deg, {BAITEL_BLACK} 0%, {BAITEL_BLUE} 100%)"
+else:
+    BG_COLOR = "#FFFFFF"
+    BG_SECONDARY = "#F5F5F5"
+    TEXT_COLOR = "#000000"
+    CARD_BG = "#FFFFFF"
+    HEADER_GRADIENT = f"linear-gradient(135deg, {BAITEL_BLUE} 0%, {BAITEL_YELLOW} 100%)"
+
+# CSS personalizado con colores BAITEL
+st.markdown(f"""
 <style>
-    .main {
-        background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
-    }
-    .stApp {
-        background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
-    }
-    div[data-testid="stMetricValue"] {
+    .main {{
+        background-color: {BG_COLOR};
+    }}
+    .stApp {{
+        background-color: {BG_COLOR};
+    }}
+    .block-container {{
+        background-color: {BG_COLOR};
+    }}
+    div[data-testid="stMetricValue"] {{
         font-size: 28px;
         font-weight: bold;
-    }
+        color: {TEXT_COLOR};
+    }}
+    div[data-testid="stMetricLabel"] {{
+        color: {TEXT_COLOR};
+    }}
+    .stSelectbox label, .stTextInput label, .stMultiSelect label {{
+        color: {TEXT_COLOR} !important;
+    }}
+    h1, h2, h3, h4, h5, h6, p, span, div {{
+        color: {TEXT_COLOR};
+    }}
     .qr-modal {
         background: white;
         padding: 30px;
@@ -256,13 +297,24 @@ def show_qr_modal(row):
             else:
                 st.error(message)
 
-# Header
-st.markdown("""
-<div style='background: linear-gradient(135deg, #2c3e50 0%, #3498db 100%); padding: 30px; border-radius: 15px; margin-bottom: 20px;'>
-    <h1 style='color: white; text-align: center; margin: 0;'>🚀 Sistema eSIM BAITEL</h1>
-    <p style='color: white; text-align: center; margin: 10px 0 0 0;'>Gestión de Inventario - Versión Streamlit</p>
-</div>
-""", unsafe_allow_html=True)
+# Header con toggle de modo oscuro
+col_header, col_toggle_mode = st.columns([5, 1])
+
+with col_header:
+    st.markdown(f"""
+    <div style='background: {HEADER_GRADIENT}; padding: 30px; border-radius: 15px; margin-bottom: 20px;'>
+        <h1 style='color: white; text-align: center; margin: 0;'>🚀 Sistema eSIM BAITEL</h1>
+        <p style='color: white; text-align: center; margin: 10px 0 0 0;'>Gestión de Inventario - Versión Streamlit</p>
+    </div>
+    """, unsafe_allow_html=True)
+
+with col_toggle_mode:
+    st.write("")  # Espaciado
+    st.write("")  # Espaciado
+    mode_icon = "🌙" if st.session_state.dark_mode else "☀️"
+    if st.button(f"{mode_icon} Modo {'Claro' if st.session_state.dark_mode else 'Oscuro'}", use_container_width=True):
+        st.session_state.dark_mode = not st.session_state.dark_mode
+        st.rerun()
 
 # Cargar datos
 df = load_data()
@@ -438,7 +490,13 @@ with tab1:
     with col_title:
         st.subheader("📋 Inventario de eSIM")
     with col_toggle:
-        view_mode = st.selectbox("👁️ Vista", ["Lista", "Tarjetas"], label_visibility="collapsed")
+        view_mode = st.selectbox(
+            "👁️ Vista",
+            ["Tarjetas", "Lista"],
+            index=0 if st.session_state.view_mode == "Tarjetas" else 1,
+            label_visibility="collapsed"
+        )
+        st.session_state.view_mode = view_mode
     
     if not filtered_df.empty:
         if view_mode == "Lista":
