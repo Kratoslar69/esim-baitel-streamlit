@@ -540,6 +540,25 @@ with st.sidebar:
                             
                             if duplicates_count > 0:
                                 st.warning(f"⚠️ Se encontraron {duplicates_count} registros duplicados que serán omitidos")
+                                
+                                # Generar archivo Excel con duplicados
+                                duplicates_df = import_df[import_df['iccid'].isin(existing_iccids)]
+                                
+                                # Crear archivo Excel en memoria
+                                from io import BytesIO
+                                output = BytesIO()
+                                with pd.ExcelWriter(output, engine='openpyxl') as writer:
+                                    duplicates_df.to_excel(writer, index=False, sheet_name='Duplicados')
+                                output.seek(0)
+                                
+                                # Botón de descarga
+                                st.download_button(
+                                    label="📄 Descargar Reporte de Duplicados",
+                                    data=output,
+                                    file_name=f"duplicados_{datetime.now().strftime('%Y%m%d_%H%M%S')}.xlsx",
+                                    mime="application/vnd.openxmlformats-officedocument.spreadsheetml.sheet",
+                                    use_container_width=True
+                                )
                             
                             if len(new_records_df) == 0:
                                 st.error("❌ Todos los registros ya existen en la base de datos. No hay nada que importar.")
