@@ -6,6 +6,7 @@ from dotenv import load_dotenv
 import plotly.express as px
 from datetime import datetime
 import io
+from io import BytesIO
 import requests
 import time
 from template_generator import generate_template, validate_import_data
@@ -482,7 +483,7 @@ with st.sidebar:
     # Exportar datos actuales
     if st.button("📊 Exportar Inventario Actual", use_container_width=True):
         if not df.empty:
-            output = io.BytesIO()
+            output = BytesIO()
             with pd.ExcelWriter(output, engine='openpyxl') as writer:
                 df.to_excel(writer, index=False, sheet_name='eSIM Data')
             output.seek(0)
@@ -551,7 +552,6 @@ with st.sidebar:
                                 st.info("Los duplicados se detectaron por ICCID o MSISDN existente en la base de datos")
                                 
                                 # Crear archivo Excel en memoria
-                                from io import BytesIO
                                 output = BytesIO()
                                 with pd.ExcelWriter(output, engine='openpyxl') as writer:
                                     duplicates_df.to_excel(writer, index=False, sheet_name='Duplicados')
