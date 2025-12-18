@@ -4,7 +4,7 @@ import io
 def generate_template():
     """Genera una plantilla Excel con el formato correcto para importar eSIMs"""
     
-    # Datos de ejemplo
+    # Datos de ejemplo - TODOS los campos que existen en Supabase
     data = {
         'iccid': ['8952140063883316310F', '8952140063883316302F'],
         'msisdn': ['2219592008', '2219592007'],
@@ -12,12 +12,13 @@ def generate_template():
         'pin': ['1234', '1234'],
         'puk': ['50863044', '50863036'],
         'serie': ['9271', '9270'],
-        'asignado_a': ['', ''],  # Vacío por defecto
+        'asignado_a': ['', ''],  # Vacío por defecto - opcional
         'distribuidor': ['BAITEL', 'BAITEL'],
         'ip': ['CB127', 'CB127'],
         'producto': ['MOV', 'MOV'],
         'estado': ['Disponible', 'Disponible'],
         'fecha_creacion': ['2024-01-01', '2024-01-01'],
+        'image_index': ['', ''],  # Vacío - se auto-asignará si está vacío
         'fecha_ultimo_cambio': ['2024-01-01', '2024-01-01']
     }
     
@@ -51,6 +52,7 @@ def generate_template():
 def validate_import_data(df):
     """Valida que los datos importados tengan el formato correcto"""
     
+    # Campos obligatorios (sin los auto-generados por Supabase)
     required_columns = ['iccid', 'msisdn', 'imsi', 'pin', 'puk', 'serie', 'producto', 'estado']
     
     # Verificar columnas requeridas
@@ -58,9 +60,18 @@ def validate_import_data(df):
     if missing_columns:
         return False, f"❌ Faltan columnas requeridas: {', '.join(missing_columns)}"
     
-    # Verificar que no haya ICCIDs duplicados
+    # Verificar que no haya ICCIDs duplicados dentro del archivo
     if df['iccid'].duplicated().any():
-        return False, "❌ Hay ICCIDs duplicados en el archivo"
+        duplicated_iccids = df[df['iccid'].duplicated()]['iccid'].tolist()
+        return False, f"❌ Hay ICCIDs duplicados en el archivo: {', '.join(duplicated_iccids[:5])}"
+    
+    # Verificar que los ICCIDs no estén vacíos
+    if df['iccid'].isna().any() or (df['iccid'] == '').any():
+        return False, "❌ Hay ICCIDs vacíos en el archivo"
+    
+    # Verificar que los MSISDNs no estén vacíos
+    if df['msisdn'].isna().any() or (df['msisdn'] == '').any():
+        return False, "❌ Hay MSISDNs vacíos en el archivo"
     
     # Verificar que los estados sean válidos
     valid_estados = ['Disponible', 'Usado']
@@ -68,4 +79,18 @@ def validate_import_data(df):
     if not invalid_estados.empty:
         return False, f"❌ Estados inválidos encontrados. Solo se permiten: {', '.join(valid_estados)}"
     
-    return True, "✅ Datos válidos"
+    # Verificar que los productos sean válidos
+    valid_productos = ['MOV', 'IP']
+    invalid_productos = df[~df['producto'].isin(valid_productos)]
+    if not invalid_productos.empty:
+        return False, f"❌ Productos inválidos encontrados. Solo se permiten: {', '.join(valid_productos)}"
+    
+    # Limpiar campos opcionales que pueden venir vacíos
+    optional_fields = ['asignado_a', 'distribuidor', 'ip', 'fecha_creacion', 'fecha_ultimo_cambio', 'image_index']
+    for field in optional_fields:
+        if field in df.columns:
+            # Reemplazar vacíos por None para que Supabase los maneje correctamente
+            df[field] = df[field].replace('', None)
+            df[field] = df[field].replace('nan', None)
+    
+    return True, f"✅ Datos válidos ({len(df)} registros)"
