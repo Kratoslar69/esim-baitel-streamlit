@@ -571,36 +571,76 @@ with st.sidebar:
                             else:
                                 st.info(f"📤 Importando {len(new_records_df)} registros nuevos...")
                                 
-                                # Dividir en lotes de 1000 (límite de Supabase)
-                                batch_size = 1000
                                 total_imported = 0
+                                failed_records = []
+                                progress_bar = st.progress(0)
                                 
-                                for i in range(0, len(new_records_df), batch_size):
-                                    batch = new_records_df.iloc[i:i+batch_size]
-                                    # Limpiar valores NaN antes de convertir a dict
-                                    batch = batch.replace({pd.NA: None, pd.NaT: None})
-                                    batch = batch.where(pd.notnull(batch), None)
-                                    records = batch.to_dict('records')
-                                    
-                                    # Limpiar y agregar timestamps
-                                    for record in records:
-                                        # Limpiar valores NaN/None en campos de texto
+                                # Procesar registro por registro para evitar fallos masivos
+                                for idx, row in enumerate(new_records_df.itertuples(index=False)):
+                                    try:
+                                        # Convertir a dict
+                                        record = row._asdict()
+                                        
+                                        # Limpiar valores NaN/None
                                         for key, value in record.items():
                                             if pd.isna(value) or value == 'nan' or value == 'NaN':
                                                 record[key] = None
                                         
-                                        # Agregar timestamps si no existen
+                                        # Agregar timestamps
                                         if 'fecha_creacion' not in record or record['fecha_creacion'] is None:
                                             record['fecha_creacion'] = datetime.now().isoformat()
                                         if 'fecha_ultimo_cambio' not in record or record['fecha_ultimo_cambio'] is None:
                                             record['fecha_ultimo_cambio'] = datetime.now().isoformat()
+                                        
+                                        # Intentar insertar
+                                        supabase.table('esim_data').insert([record]).execute()
+                                        total_imported += 1
+                                        
+                                    except Exception as insert_error:
+                                        # Si falla, agregar a la lista de fallidos
+                                        error_msg = str(insert_error)
+                                        if 'duplicate' in error_msg.lower() or 'unique constraint' in error_msg.lower():
+                                            failed_records.append({
+                                                'iccid': record.get('iccid', 'N/A'),
+                                                'msisdn': record.get('msisdn', 'N/A'),
+                                                'motivo': 'Duplicado (ICCID o MSISDN ya existe)'
+                                            })
+                                        else:
+                                            failed_records.append({
+                                                'iccid': record.get('iccid', 'N/A'),
+                                                'msisdn': record.get('msisdn', 'N/A'),
+                                                'motivo': f'Error: {error_msg[:100]}'
+                                            })
                                     
-                                    response = supabase.table('esim_data').insert(records).execute()
-                                    total_imported += len(records)
+                                    # Actualizar barra de progreso
+                                    progress_bar.progress((idx + 1) / len(new_records_df))
                                 
-                                st.success(f"✅ {total_imported} registros nuevos importados exitosamente")
+                                progress_bar.empty()
+                                
+                                # Mostrar resultados
+                                if total_imported > 0:
+                                    st.success(f"✅ {total_imported} registros importados exitosamente")
+                                
                                 if duplicates_count > 0:
-                                    st.info(f"ℹ️ {duplicates_count} registros duplicados fueron omitidos")
+                                    st.info(f"ℹ️ {duplicates_count} registros duplicados detectados previamente")
+                                
+                                if len(failed_records) > 0:
+                                    st.warning(f"⚠️ {len(failed_records)} registros fallaron durante la importación")
+                                    
+                                    # Generar reporte de fallos
+                                    failed_df = pd.DataFrame(failed_records)
+                                    output_failed = BytesIO()
+                                    with pd.ExcelWriter(output_failed, engine='openpyxl') as writer:
+                                        failed_df.to_excel(writer, index=False, sheet_name='Fallos')
+                                    output_failed.seek(0)
+                                    
+                                    st.download_button(
+                                        label="📄 Descargar Reporte de Fallos",
+                                        data=output_failed,
+                                        file_name=f"fallos_importacion_{datetime.now().strftime('%Y%m%d_%H%M%S')}.xlsx",
+                                        mime="application/vnd.openxmlformats-officedocument.spreadsheetml.sheet",
+                                        use_container_width=True
+                                    )
                             st.cache_data.clear()
                             time.sleep(2)
                             st.rerun()
@@ -610,7 +650,7 @@ with st.sidebar:
         except Exception as e:
             st.error(f"❌ Error al leer archivo: {str(e)}")
 
-# VERSION: 2.2.0 - Detección de duplicados por ICCID y MSISDN
+# VERSION: 2.3.0 - Manejo robusto de duplicados con inserción individual
 # Aplicar filtros
 filtered_df = df.copy()
 
@@ -879,6 +919,6 @@ with tab4:
 st.divider()
 st.markdown(f"""
 <div style='text-align: center; padding: 20px; color: {TEXT_COLOR}; font-size: 14px;'>
-    🚀 Sistema eSIM BAITEL | Gestión de Inventario - v2.2.0
+    🚀 Sistema eSIM BAITEL | Gestión de Inventario - v2.3.0
 </div>
 """, unsafe_allow_html=True)
