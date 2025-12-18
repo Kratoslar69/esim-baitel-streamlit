@@ -530,19 +530,25 @@ with st.sidebar:
                 if st.button("✅ Confirmar e Importar", use_container_width=True, type="primary"):
                     with st.spinner("Verificando duplicados..."):
                         try:
-                            # Obtener ICCIDs existentes en la base de datos
-                            existing_response = supabase.table('esim_data').select('iccid').execute()
-                            existing_iccids = set([row['iccid'] for row in existing_response.data])
+                            # Obtener ICCIDs y MSISDNs existentes en la base de datos
+                            existing_response = supabase.table('esim_data').select('iccid, msisdn').execute()
+                            existing_iccids = set([row['iccid'] for row in existing_response.data if row.get('iccid')])
+                            existing_msisdns = set([row['msisdn'] for row in existing_response.data if row.get('msisdn')])
+                            
+                            # Identificar duplicados por ICCID o MSISDN
+                            duplicate_mask = (
+                                import_df['iccid'].isin(existing_iccids) | 
+                                import_df['msisdn'].isin(existing_msisdns)
+                            )
                             
                             # Filtrar solo los registros nuevos (que no existen)
-                            new_records_df = import_df[~import_df['iccid'].isin(existing_iccids)]
-                            duplicates_count = len(import_df) - len(new_records_df)
+                            new_records_df = import_df[~duplicate_mask]
+                            duplicates_df = import_df[duplicate_mask]
+                            duplicates_count = len(duplicates_df)
                             
                             if duplicates_count > 0:
                                 st.warning(f"⚠️ Se encontraron {duplicates_count} registros duplicados que serán omitidos")
-                                
-                                # Generar archivo Excel con duplicados
-                                duplicates_df = import_df[import_df['iccid'].isin(existing_iccids)]
+                                st.info("Los duplicados se detectaron por ICCID o MSISDN existente en la base de datos")
                                 
                                 # Crear archivo Excel en memoria
                                 from io import BytesIO
@@ -604,7 +610,7 @@ with st.sidebar:
         except Exception as e:
             st.error(f"❌ Error al leer archivo: {str(e)}")
 
-# VERSION: 2.1.0 - Detección de duplicados implementada
+# VERSION: 2.2.0 - Detección de duplicados por ICCID y MSISDN
 # Aplicar filtros
 filtered_df = df.copy()
 
@@ -873,6 +879,6 @@ with tab4:
 st.divider()
 st.markdown(f"""
 <div style='text-align: center; padding: 20px; color: {TEXT_COLOR}; font-size: 14px;'>
-    🚀 Sistema eSIM BAITEL | Gestión de Inventario - v2.1.0
+    🚀 Sistema eSIM BAITEL | Gestión de Inventario - v2.2.0
 </div>
 """, unsafe_allow_html=True)
