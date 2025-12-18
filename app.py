@@ -604,6 +604,7 @@ with st.sidebar:
         except Exception as e:
             st.error(f"❌ Error al leer archivo: {str(e)}")
 
+# VERSION: 2.1.0 - Detección de duplicados implementada
 # Aplicar filtros
 filtered_df = df.copy()
 
@@ -871,7 +872,7 @@ with tab4:
 # Footer
 st.divider()
 st.markdown(f"""
-<div style='text-align: center; color: {TEXT_COLOR}; padding: 20px;'>
-    <p>Sistema eSIM BAITEL - Versión Streamlit | Conectado a Supabase ✅</p>
+<div style='text-align: center; padding: 20px; color: {TEXT_COLOR}; font-size: 14px;'>
+    🚀 Sistema eSIM BAITEL | Gestión de Inventario - v2.1.0
 </div>
 """, unsafe_allow_html=True)
