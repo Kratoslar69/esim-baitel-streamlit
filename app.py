@@ -536,13 +536,22 @@ with st.sidebar:
                             
                             for i in range(0, len(import_df), batch_size):
                                 batch = import_df.iloc[i:i+batch_size]
+                                # Limpiar valores NaN antes de convertir a dict
+                                batch = batch.replace({pd.NA: None, pd.NaT: None})
+                                batch = batch.where(pd.notnull(batch), None)
                                 records = batch.to_dict('records')
                                 
-                                # Agregar timestamps si no existen
+                                # Limpiar y agregar timestamps
                                 for record in records:
-                                    if 'fecha_creacion' not in record or pd.isna(record['fecha_creacion']):
+                                    # Limpiar valores NaN/None en campos de texto
+                                    for key, value in record.items():
+                                        if pd.isna(value) or value == 'nan' or value == 'NaN':
+                                            record[key] = None
+                                    
+                                    # Agregar timestamps si no existen
+                                    if 'fecha_creacion' not in record or record['fecha_creacion'] is None:
                                         record['fecha_creacion'] = datetime.now().isoformat()
-                                    if 'fecha_ultimo_cambio' not in record or pd.isna(record['fecha_ultimo_cambio']):
+                                    if 'fecha_ultimo_cambio' not in record or record['fecha_ultimo_cambio'] is None:
                                         record['fecha_ultimo_cambio'] = datetime.now().isoformat()
                                 
                                 response = supabase.table('esim_data').insert(records).execute()
