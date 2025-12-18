@@ -708,7 +708,7 @@ with tab1:
         if view_mode == "Lista":
             # Vista de lista (original)
             for idx, row in filtered_df.iterrows():
-                with st.expander(f"📱 {row['iccid']} - {row['estado']} - {row.get('asignado_a', 'Sin asignar')}"):
+                with st.expander(f"📱 {row['iccid']} - {row['estado']} - {row.get('asignado_a', '') or 'Sin asignar'}"):
                     col_info, col_qr = st.columns([2, 1])
                     
                     with col_info:
@@ -764,7 +764,7 @@ with tab1:
                                 <strong>MSISDN:</strong> {row.get('msisdn', 'N/A')}<br>
                                 <strong>Producto:</strong> {row.get('producto', 'N/A')}<br>
                                 <strong>IP:</strong> {row.get('ip', 'N/A')}<br>
-                                <strong>Asignado:</strong> {row.get('asignado_a', 'N/A')[:15]}...
+                                <strong>Asignado:</strong> {(row.get('asignado_a', 'N/A') or 'N/A')[:15]}...
                             </div>
                         </div>
                         """, unsafe_allow_html=True)
