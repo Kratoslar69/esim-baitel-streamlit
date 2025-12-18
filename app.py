@@ -528,36 +528,54 @@ with st.sidebar:
                 
                 # Botón para confirmar importación
                 if st.button("✅ Confirmar e Importar", use_container_width=True, type="primary"):
-                    with st.spinner("Importando datos..."):
+                    with st.spinner("Verificando duplicados..."):
                         try:
-                            # Dividir en lotes de 1000 (límite de Supabase)
-                            batch_size = 1000
-                            total_imported = 0
+                            # Obtener ICCIDs existentes en la base de datos
+                            existing_response = supabase.table('esim_data').select('iccid').execute()
+                            existing_iccids = set([row['iccid'] for row in existing_response.data])
                             
-                            for i in range(0, len(import_df), batch_size):
-                                batch = import_df.iloc[i:i+batch_size]
-                                # Limpiar valores NaN antes de convertir a dict
-                                batch = batch.replace({pd.NA: None, pd.NaT: None})
-                                batch = batch.where(pd.notnull(batch), None)
-                                records = batch.to_dict('records')
+                            # Filtrar solo los registros nuevos (que no existen)
+                            new_records_df = import_df[~import_df['iccid'].isin(existing_iccids)]
+                            duplicates_count = len(import_df) - len(new_records_df)
+                            
+                            if duplicates_count > 0:
+                                st.warning(f"⚠️ Se encontraron {duplicates_count} registros duplicados que serán omitidos")
+                            
+                            if len(new_records_df) == 0:
+                                st.error("❌ Todos los registros ya existen en la base de datos. No hay nada que importar.")
+                            else:
+                                st.info(f"📤 Importando {len(new_records_df)} registros nuevos...")
                                 
-                                # Limpiar y agregar timestamps
-                                for record in records:
-                                    # Limpiar valores NaN/None en campos de texto
-                                    for key, value in record.items():
-                                        if pd.isna(value) or value == 'nan' or value == 'NaN':
-                                            record[key] = None
+                                # Dividir en lotes de 1000 (límite de Supabase)
+                                batch_size = 1000
+                                total_imported = 0
+                                
+                                for i in range(0, len(new_records_df), batch_size):
+                                    batch = new_records_df.iloc[i:i+batch_size]
+                                    # Limpiar valores NaN antes de convertir a dict
+                                    batch = batch.replace({pd.NA: None, pd.NaT: None})
+                                    batch = batch.where(pd.notnull(batch), None)
+                                    records = batch.to_dict('records')
                                     
-                                    # Agregar timestamps si no existen
-                                    if 'fecha_creacion' not in record or record['fecha_creacion'] is None:
-                                        record['fecha_creacion'] = datetime.now().isoformat()
-                                    if 'fecha_ultimo_cambio' not in record or record['fecha_ultimo_cambio'] is None:
-                                        record['fecha_ultimo_cambio'] = datetime.now().isoformat()
+                                    # Limpiar y agregar timestamps
+                                    for record in records:
+                                        # Limpiar valores NaN/None en campos de texto
+                                        for key, value in record.items():
+                                            if pd.isna(value) or value == 'nan' or value == 'NaN':
+                                                record[key] = None
+                                        
+                                        # Agregar timestamps si no existen
+                                        if 'fecha_creacion' not in record or record['fecha_creacion'] is None:
+                                            record['fecha_creacion'] = datetime.now().isoformat()
+                                        if 'fecha_ultimo_cambio' not in record or record['fecha_ultimo_cambio'] is None:
+                                            record['fecha_ultimo_cambio'] = datetime.now().isoformat()
+                                    
+                                    response = supabase.table('esim_data').insert(records).execute()
+                                    total_imported += len(records)
                                 
-                                response = supabase.table('esim_data').insert(records).execute()
-                                total_imported += len(records)
-                            
-                            st.success(f"✅ {total_imported} registros importados exitosamente")
+                                st.success(f"✅ {total_imported} registros nuevos importados exitosamente")
+                                if duplicates_count > 0:
+                                    st.info(f"ℹ️ {duplicates_count} registros duplicados fueron omitidos")
                             st.cache_data.clear()
                             time.sleep(2)
                             st.rerun()
