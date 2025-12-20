@@ -36,7 +36,7 @@ if 'dark_mode' not in st.session_state:
 if 'view_mode' not in st.session_state:
     st.session_state.view_mode = "Tarjetas"
 
-# Inicializar last_refresh
+# Inicializar last_refresh para control de auto-refresco
 if 'last_refresh' not in st.session_state:
     st.session_state.last_refresh = datetime.now()
 
@@ -65,63 +65,6 @@ else:
 # CSS personalizado con colores BAITEL
 st.markdown(f"""
 <style>
-    /* === KPI CARDS PROFESIONALES === */
-    .kpi-container {
-        display: grid;
-        grid-template-columns: repeat(4, 1fr);
-        gap: 20px;
-        margin: 30px 0;
-    }
-    
-    .kpi-card {
-        background: ${CARD_BG};
-        border: 1px solid ${BORDER_COLOR};
-        border-radius: 15px;
-        padding: 25px;
-        box-shadow: 0 2px 8px rgba(0,0,0,0.04);
-        transition: all 0.3s ease;
-        position: relative;
-        overflow: hidden;
-    }
-    
-    .kpi-card:hover {
-        transform: translateY(-5px);
-        box-shadow: 0 8px 20px rgba(0,0,0,0.08);
-    }
-    
-    .kpi-card::before {
-        content: '';
-        position: absolute;
-        top: 0;
-        left: 0;
-        width: 4px;
-        height: 100%;
-        background: var(--accent-color);
-    }
-    
-    .kpi-icon {
-        font-size: 32px;
-        margin-bottom: 15px;
-        opacity: 0.9;
-    }
-    
-    .kpi-value {
-        font-size: 36px;
-        font-weight: 700;
-        color: ${TEXT_COLOR};
-        margin: 10px 0;
-        line-height: 1;
-    }
-    
-    .kpi-label {
-        font-size: 14px;
-        color: #7F8C8D;
-        font-weight: 500;
-        text-transform: uppercase;
-        letter-spacing: 0.5px;
-    }
-    
-
     .main {{
         background-color: {BG_COLOR};
     }}
@@ -392,7 +335,6 @@ def update_esim(esim_id, asignado_a, estado):
     except Exception as e:
         return False, f"❌ Error al actualizar: {str(e)}"
 
-
 # Función para mostrar QR con modal interactivo
 def show_qr_modal(row):
     iccid = row['iccid']
@@ -435,6 +377,16 @@ def show_qr_modal(row):
         st.write(f"**PUK:** {row.get('puk', 'N/A')}")
         st.write(f"**IP:** {row.get('ip', 'N/A')}")
         st.write(f"**Producto:** {row.get('producto', 'N/A')}")
+    
+    # Mostrar fecha de asignación si existe
+    fecha_asig = row.get('fecha_asignacion', None)
+    if fecha_asig:
+        st.info(f"📅 **Fecha de Asignación:** {fecha_asig}")
+    
+    # Mostrar distribuidor si existe
+    distribuidor = row.get('distribuidor', None)
+    if distribuidor:
+        st.write(f"**Distribuidor:** {distribuidor}")
     
     st.divider()
     
@@ -525,7 +477,6 @@ with st.sidebar:
     
     st.success("✅ Conectado a Supabase")
     
-    
     # Indicador de próximo refresco
     if AUTO_REFRESH_MINUTES > 0:
         current_time = datetime.now()
@@ -533,9 +484,12 @@ with st.sidebar:
         minutes_remaining = max(0, AUTO_REFRESH_MINUTES - int(time_diff))
         if minutes_remaining > 0:
             st.caption(f"🔄 Próximo refresco: {minutes_remaining} min")
+        else:
+            st.caption("🔄 Refrescando...")
     
-    if st.button("🔄 Actualizar Datos", use_container_width=True):
+    if st.button("🔄 Actualizar Datos Ahora", use_container_width=True):
         st.cache_data.clear()
+        st.session_state.last_refresh = datetime.now()
         st.rerun()
     
     st.divider()
@@ -813,10 +767,6 @@ with tab1:
                         st.write(f"**IP:** {row.get('ip', 'N/A')}")
                         st.write(f"**Estado:** {row.get('estado', 'N/A')}")
                         st.write(f"**Distribuidor:** {row.get('distribuidor', 'N/A')}")
-        
-        fecha_asig = row.get('fecha_asignacion', None)
-        if fecha_asig:
-            st.write(f"**📅 Fecha Asignación:** {fecha_asig}")
                     
                     with col_qr:
                         if st.button(f"📱 Ver QR", key=f"qr_{row['id']}", use_container_width=True):
