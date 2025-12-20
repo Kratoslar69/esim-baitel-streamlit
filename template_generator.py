@@ -19,7 +19,8 @@ def generate_template():
         'estado': ['Disponible', 'Disponible'],
         'fecha_creacion': ['2024-01-01', '2024-01-01'],
         'image_index': ['', ''],  # Vacío - se auto-asignará si está vacío
-        'fecha_ultimo_cambio': ['2024-01-01', '2024-01-01']
+        'fecha_ultimo_cambio': ['2024-01-01', '2024-01-01'],
+        'fecha_asignacion': ['', '']  # Vacío - se llena automáticamente al asignar
     }
     
     df = pd.DataFrame(data)
@@ -86,7 +87,7 @@ def validate_import_data(df):
         return False, f"❌ Productos inválidos encontrados. Solo se permiten: {', '.join(valid_productos)}"
     
     # Limpiar campos opcionales que pueden venir vacíos
-    optional_fields = ['asignado_a', 'distribuidor', 'ip', 'fecha_creacion', 'fecha_ultimo_cambio', 'image_index']
+    optional_fields = ['asignado_a', 'distribuidor', 'ip', 'fecha_creacion', 'fecha_ultimo_cambio', 'image_index', 'fecha_asignacion']
     for field in optional_fields:
         if field in df.columns:
             # Reemplazar vacíos por None para que Supabase los maneje correctamente
